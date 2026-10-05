@@ -1,0 +1,37 @@
+lang en_US.UTF-8
+keyboard us
+timezone UTC
+text
+reboot
+# STIG requires FIPS mode enabled at boot
+bootloader --append="fips=1"
+# Network configuration (adjust as needed for your offline environment)
+network --bootproto=dhcp --device=link --activate
+# Root password (Templated for CI/CD Secrets Injection)
+rootpw --plaintext "${KS_ROOT_PASSWORD}"
+# STIG Mandatory Partitioning
+ignoredisk --only-use=sda
+zerombr
+clearpart --all --initlabel
+part /boot --fstype="xfs" --size=1024
+part /boot/efi --fstype="efi" --size=600
+part pv.01 --size=1 --grow
+volgroup rhel pv.01
+logvol / --vgname=rhel --size=10240 --name=root
+logvol /home --vgname=rhel --size=5120 --name=home --fsoptions="nodev"
+logvol /tmp --vgname=rhel --size=2048 --name=tmp --fsoptions="nodev,nosuid,noexec"
+logvol /var --vgname=rhel --size=5120 --name=var
+logvol /var/log --vgname=rhel --size=2048 --name=var_log
+logvol /var/log/audit --vgname=rhel --size=1024 --name=var_log_audit
+logvol /var/tmp --vgname=rhel --size=2048 --name=var_tmp --fsoptions="nodev,nosuid,noexec"
+# Enforce DISA STIG Profile via OpenSCAP
+%addon org_fedora_oscap
+    content-type = scap-security-guide
+    profile = xccdf_org.ssgproject.content_profile_stig
+%end
+%packages
+@^minimal-environment
+scap-security-guide
+ansible-core
+git
+%end

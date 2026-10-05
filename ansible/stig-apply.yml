@@ -1,0 +1,8 @@
+---
+- name: Apply RHEL/Rocky 9 STIG
+  hosts: all
+  become: yes
+  roles:
+    - ansible-lockdown.rhel9_stig
+  vars:
+    rhel9stig_disruption_high: true
